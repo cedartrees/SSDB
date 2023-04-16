@@ -4,11 +4,11 @@
 class SheetTable {
 
   // internal properties
-  sheetName: string;
-  sheet: GoogleAppsScript.Spreadsheet.Sheet;
-  headers: string[];
-  columnIndexMap: {[key: string]: number};
-  ROW_INDEX_CONVERT_NUM: number = 2;
+  private sheetName: string;
+  private sheet: GoogleAppsScript.Spreadsheet.Sheet;
+  private headers: string[];
+  private columnIndexMap: {[key: string]: number};
+  private ROW_INDEX_CONVERT_NUM: number = 2;
 
   /**
    * SheetTable クラスのインスタンスを作成します。
@@ -30,7 +30,7 @@ class SheetTable {
     this.headers = this.sheet
       .getRange(1, 1, 1, this.sheet.getLastColumn())
       .getValues()[0];
-    this.columnIndexMap = this.createColumnIndexMap_(this.headers);
+    this.columnIndexMap = this.createColumnIndexMap(this.headers);
   }
 
   /**
@@ -39,8 +39,8 @@ class SheetTable {
    * @returns {number} 追加された行数。
    */
   insert(rowValues: object): number {
-    const record = this.createRecord_(rowValues, this.getColumnIndexMap_());
-    this.getSheet_().appendRow(record);
+    const record = this.createRecord(rowValues, this.getColumnIndexMap());
+    this.getSheet().appendRow(record);
     return 1;
   }
 
@@ -51,11 +51,11 @@ class SheetTable {
    */
   insertAll(rowValuesArray: Array<object>): number {
     const records = rowValuesArray.map((rowValues) =>
-      this.createRecord_(rowValues, this.getColumnIndexMap_())
+      this.createRecord(rowValues, this.getColumnIndexMap())
     );
-    this.getSheet_()
+    this.getSheet()
       .getRange(
-        this.getSheet_().getLastRow() + this.ROW_INDEX_CONVERT_NUM,
+        this.getSheet().getLastRow() + this.ROW_INDEX_CONVERT_NUM,
         1,
         records.length,
         records[0].length
@@ -71,12 +71,12 @@ class SheetTable {
    * @returns {Array<Object>} 検索に一致した行のデータ。一致する行がない場合は空の配列。
    */
   selectByPk(pkColumnName: string, pkValue: any): Array<object> {
-    const index = this.getIndexByColumnName_(pkColumnName);
-    const data = this.getDataset_();
-    const record = data.find((row) => this.valuesMatch_(row[index], pkValue));
+    const index = this.getIndexByColumnName(pkColumnName);
+    const data = this.getDataset();
+    const record = data.find((row) => this.valuesMatch(row[index], pkValue));
     if (!record) return [];
 
-    return this.convertRecordToObj_([record]);
+    return this.convertRecordToObj([record]);
   }
 
   /**
@@ -90,10 +90,10 @@ class SheetTable {
     const records = this.selectByPk(pkColumnName, pkValue);
     if (records.length === 0) return [];
 
-    const sortedRecords = this.sortData_(
+    const sortedRecords = this.sortData(
       records,
       sortBy);
-    return this.convertRecordToObj_(sortedRecords);
+    return this.convertRecordToObj(sortedRecords);
   }
 
   /**
@@ -103,15 +103,15 @@ class SheetTable {
    * @returns {Array<Object>} 検索に一致した行のデータの配列。一致する行がない場合は空の配列。
    */
   selectByColumn(columnName: string, value: any): Array<object> {
-    const index = this.getIndexByColumnName_(columnName);
-    const data = this.getDataset_();
+    const index = this.getIndexByColumnName(columnName);
+    const data = this.getDataset();
     const records = data.filter((row) => {
-      return this.valuesMatch_(row[index], value);
+      return this.valuesMatch(row[index], value);
     });
 
     if (records.length === 0) return [];
 
-    return this.convertRecordToObj_(records);
+    return this.convertRecordToObj(records);
   }
 
   /**
@@ -125,10 +125,10 @@ class SheetTable {
     const records = this.selectByColumn(columnName, value);
     if (records.length === 0) return [];
 
-    const sortedRecords = this.sortData_(
+    const sortedRecords = this.sortData(
       records,
       sortBy);
-    return this.convertRecordToObj_(sortedRecords);
+    return this.convertRecordToObj(sortedRecords);
   }
 
   /**
@@ -137,19 +137,19 @@ class SheetTable {
    * @returns {Array<Object>} 検索に一致した行のデータの配列。一致する行がない場合は空の配列。
    */
   selectByColumns(criteria: object): Array<object> {
-    const data = this.getDataset_();
+    const data = this.getDataset();
     const records = data.filter(
       (row) =>
         Object.keys(criteria).length === 0 ||
         Object.entries(criteria).every(([columnName, value]) => {
-          const index = this.getIndexByColumnName_(columnName);
-          return this.valuesMatch_(row[index], value);
+          const index = this.getIndexByColumnName(columnName);
+          return this.valuesMatch(row[index], value);
         })
     );
 
     if (records.length === 0) return [];
 
-    return this.convertRecordToObj_(records);
+    return this.convertRecordToObj(records);
   }
 
   /**
@@ -162,10 +162,10 @@ class SheetTable {
     const records = this.selectByColumns(criteria);
     if (records.length === 0) return [];
 
-    const sortedRecords = this.sortData_(
+    const sortedRecords = this.sortData(
       records,
       sortBy);
-    return this.convertRecordToObj_(sortedRecords);
+    return this.convertRecordToObj(sortedRecords);
   }
 
   /**
@@ -173,18 +173,18 @@ class SheetTable {
    * @return {Array<Object>} シートの全行のデータの配列。一致する行がない場合は空の配列。
    */
   selectAll(): Array<object> {
-    const data = this.getDataset_();
-    return this.convertRecordToObj_(data);
+    const data = this.getDataset();
+    return this.convertRecordToObj(data);
   }
 
   selectAllSorted(sortBy) {
     const records = this.selectAll();
     if (records.length === 0) return [];
 
-    const sortedRecords = this.sortData_(
+    const sortedRecords = this.sortData(
       records,
       sortBy);
-    return this.convertRecordToObj_(sortedRecords);
+    return this.convertRecordToObj(sortedRecords);
   }
 
   /**
@@ -197,12 +197,12 @@ class SheetTable {
       throw new Error("Invalid columnName");
     }
 
-    const index = this.getIndexByColumnName_(columnName);
+    const index = this.getIndexByColumnName(columnName);
     if (index === undefined) {
       throw new Error(`Column "${columnName}" not found`);
     }
 
-    const data = this.getDataset_();
+    const data = this.getDataset();
     if (data.length === 0) return null;
 
     const initialMax = data[0][index];
@@ -238,20 +238,20 @@ class SheetTable {
       throw new Error("Invalid increment value");
     }
 
-    const pkColumnIndex = this.getIndexByColumnName_(pkColumnName);
+    const pkColumnIndex = this.getIndexByColumnName(pkColumnName);
     if (pkColumnIndex === undefined) {
       throw new Error(`Column "${pkColumnName}" not found`);
     }
 
-    const columnIndex = this.getIndexByColumnName_(columnName);
+    const columnIndex = this.getIndexByColumnName(columnName);
     if (columnIndex === undefined) {
       throw new Error(`Column "${columnName}" not found`);
     }
 
-    const data = this.getDataset_();
+    const data = this.getDataset();
 
     const recordIndex = data.findIndex((row) =>
-      this.valuesMatch_(row[pkColumnIndex], pkValue)
+      this.valuesMatch(row[pkColumnIndex], pkValue)
     );
     if (recordIndex === -1) return null;
 
@@ -266,7 +266,7 @@ class SheetTable {
 
     const newValue = value + increment;
 
-    this.getSheet_().getRange(recordIndex + this.ROW_INDEX_CONVERT_NUM, columnIndex + 1).setValue(newValue);
+    this.getSheet().getRange(recordIndex + this.ROW_INDEX_CONVERT_NUM, columnIndex + 1).setValue(newValue);
 
     return newValue;
   }
@@ -279,24 +279,24 @@ class SheetTable {
    * @returns {Array<Object>} 更新された行のデータ。一致する行がない場合は空の配列。
    */
   updateByPk(pkColumnName: string, pkValue: any, rowValues: object): Array<object> {
-    const pkColumnIndex = this.getIndexByColumnName_(pkColumnName);
-    const data = this.getDataset_();
+    const pkColumnIndex = this.getIndexByColumnName(pkColumnName);
+    const data = this.getDataset();
 
     const recordIndex = data.findIndex((row) =>
-      this.valuesMatch_(row[pkColumnIndex], pkValue)
+      this.valuesMatch(row[pkColumnIndex], pkValue)
     );
     if (recordIndex === -1) return [];
 
     const record = data[recordIndex];
 
-    const columnIndexMap = this.getColumnIndexMap_();
-    const newRecord = this.createRecord_(rowValues, columnIndexMap);
+    const columnIndexMap = this.getColumnIndexMap();
+    const newRecord = this.createRecord(rowValues, columnIndexMap);
 
-    this.getSheet_()
+    this.getSheet()
       .getRange(recordIndex + this.ROW_INDEX_CONVERT_NUM, 1, 1, record.length)
       .setValues([newRecord]);
 
-    return this.convertRecordToObj_([newRecord]);
+    return this.convertRecordToObj([newRecord]);
   }
 
   /**
@@ -308,23 +308,23 @@ class SheetTable {
    * @returns {Array<Object>} 更新された行のデータ。一致する行がない場合は空の配列。
    */
   updateItemByPk(pkColumnName: string, pkValue: any, columnName: string, value: any): Array<object> {
-    const pkColumnIndex = this.getIndexByColumnName_(pkColumnName);
-    const data = this.getDataset_();
+    const pkColumnIndex = this.getIndexByColumnName(pkColumnName);
+    const data = this.getDataset();
 
     const recordIndex = data.findIndex((row) =>
-      this.valuesMatch_(row[pkColumnIndex], pkValue)
+      this.valuesMatch(row[pkColumnIndex], pkValue)
     );
     if (recordIndex === -1) return [];
 
     const record = data[recordIndex];
-    const columnIndex = this.getIndexByColumnName_(columnName);
+    const columnIndex = this.getIndexByColumnName(columnName);
     record[columnIndex] = value;
 
-    this.getSheet_()
+    this.getSheet()
       .getRange(recordIndex + this.ROW_INDEX_CONVERT_NUM, 1, 1, record.length)
       .setValues([record]);
 
-    return this.convertRecordToObj_([record]);
+    return this.convertRecordToObj([record]);
   }
 
   /**
@@ -335,21 +335,21 @@ class SheetTable {
    * @returns {Array<Object>} 更新された行のデータ。一致する行がない場合は空の配列。
    */
   updateItemByColumns(criteria: object, columnName: string, value: any): Array<object> {
-    const columnIndexMap = this.getColumnIndexMap_();
-    const data = this.getDataset_();
+    const columnIndexMap = this.getColumnIndexMap();
+    const data = this.getDataset();
 
     const newRecords = data
       .map((record, index) => {
         const flag = Object.entries(criteria).every(([columnName, value]) => {
-          const index = this.getIndexByColumnName_(columnName);
-          return this.valuesMatch_(record[index], value);
+          const index = this.getIndexByColumnName(columnName);
+          return this.valuesMatch(record[index], value);
         });
 
         if (flag) {
           const columnIndex = columnIndexMap[columnName];
           record[columnIndex] = value;
 
-          this.getSheet_()
+          this.getSheet()
             .getRange(index + this.ROW_INDEX_CONVERT_NUM, 1, 1, record.length)
             .setValues([record]);
           return record;
@@ -359,7 +359,7 @@ class SheetTable {
 
     if (newRecords) return [];
 
-    return this.convertRecordToObj_(newRecords);
+    return this.convertRecordToObj(newRecords);
   }
 
   /**
@@ -369,14 +369,14 @@ class SheetTable {
    * @returns {Array<Object>} 更新された行のデータ。一致する行がない場合は空の配列。
    */
   updateItemsByColumns(criteria: object, columnValues: object): Array<object> {
-    const columnIndexMap = this.getColumnIndexMap_();
-    const data = this.getDataset_();
+    const columnIndexMap = this.getColumnIndexMap();
+    const data = this.getDataset();
 
     const newRecords = data
       .map((record, index) => {
         const flag = Object.entries(criteria).every(([columnName, value]) => {
-          const index = this.getIndexByColumnName_(columnName);
-          return this.valuesMatch_(record[index], value);
+          const index = this.getIndexByColumnName(columnName);
+          return this.valuesMatch(record[index], value);
         });
 
         if (flag) {
@@ -385,7 +385,7 @@ class SheetTable {
             record[columnIndex] = value;
           });
 
-          this.getSheet_()
+          this.getSheet()
             .getRange(index + this.ROW_INDEX_CONVERT_NUM, 1, 1, record.length)
             .setValues([record]);
           return record;
@@ -395,7 +395,7 @@ class SheetTable {
 
     if (newRecords) return [];
 
-    return this.convertRecordToObj_(newRecords);
+    return this.convertRecordToObj(newRecords);
   }
 
   // the following methods are private
@@ -404,8 +404,8 @@ class SheetTable {
    * @param {Array<Array<*>>} records - レコードの配列。
    * @returns {Array<Object>} レコードの配列をオブジェクトの配列に変換したもの。
    */
-  convertRecordToObj_(records: Array<Array<any>>): Array<object> {
-    const columnIndexMap = this.getColumnIndexMap_();
+  private convertRecordToObj(records: Array<Array<any>>): Array<object> {
+    const columnIndexMap = this.getColumnIndexMap();
     return records.map((record) => {
       const obj = {};
       Object.entries(columnIndexMap).forEach(([column, index]) => {
@@ -422,8 +422,8 @@ class SheetTable {
    * @returns {number} カラムのインデックス
    * @throws {Error} 無効なカラム名の場合
    */
-  getIndexByColumnName_(columnName: string): number {
-    const columnIndexMap = this.getColumnIndexMap_();
+  private getIndexByColumnName(columnName: string): number {
+    const columnIndexMap = this.getColumnIndexMap();
     const index = columnIndexMap[columnName];
     if (index === undefined)
       throw new Error(`Invalid column name: ${columnName}`);
@@ -435,7 +435,7 @@ class SheetTable {
    * @private
    * @returns {GoogleAppsScript.Spreadsheet.Sheet} シートオブジェクト
    */
-  getSheet_(): GoogleAppsScript.Spreadsheet.Sheet {
+  private getSheet(): GoogleAppsScript.Spreadsheet.Sheet {
     return this.sheet;
   }
 
@@ -444,8 +444,8 @@ class SheetTable {
    * @private
    * @returns {Array<Array>} シートからデータを取得し、配列形式で返す
    */
-  getDataset_(): Array<Array<any>> {
-    return this.getSheet_().getDataRange().getValues().slice(1);
+  private getDataset(): Array<Array<any>> {
+    return this.getSheet().getDataRange().getValues().slice(1);
   }
 
   /**
@@ -453,7 +453,7 @@ class SheetTable {
    * @private
    * @returns {Object} カラム名とインデックスのマップ
    */
-  getColumnIndexMap_(): object {
+  private getColumnIndexMap(): object {
     return this.columnIndexMap;
   }
 
@@ -463,7 +463,7 @@ class SheetTable {
    * @param {Array} headerRow - ヘッダー行のデータ
    * @returns {{[key: string]: number}} カラム名とインデックスのマップ
    */
-  createColumnIndexMap_(headerRow: Array<any>): {[key: string]: number} {
+  private createColumnIndexMap(headerRow: Array<any>): {[key: string]: number} {
     const columnIndexMap = {};
     headerRow.forEach((column, index) => {
       columnIndexMap[column] = index;
@@ -478,7 +478,7 @@ class SheetTable {
    * @param {Object} columnIndexMap - カラム名とインデックスのマップ
    * @returns {Array} 新しいレコード
    */
-  createRecord_(rowValues: object, columnIndexMap: object): Array<any> {
+  private createRecord(rowValues: object, columnIndexMap: object): Array<any> {
     const newRecord = new Array(Object.keys(columnIndexMap).length).fill("");
     Object.entries(rowValues).forEach(([column, value]) => {
       const colIndex = columnIndexMap[column];
@@ -498,10 +498,10 @@ class SheetTable {
    * @returns {Array} ソートされたデータ
    * @throws {Error} 無効なソートカラム名の場合
    */
-  sortData_(records: Array<any>, sortBy: {column: string, order: "ASC" | "DESC"}): Array<any> {
+  private sortData(records: Array<any>, sortBy: {column: string, order: "ASC" | "DESC"}): Array<any> {
     if (!sortBy) return records;
     const { column, order } = sortBy;
-    const index = this.getIndexByColumnName_(column)
+    const index = this.getIndexByColumnName(column)
 
     if (index === undefined) {
       throw new Error(`Invalid column name forsorting: ${column}`);
@@ -523,7 +523,7 @@ class SheetTable {
    * @param {*} value2 - 値2
    * @returns {boolean} 一致する場合は true、それ以外の場合は false
    */
-  valuesMatch_(value1: any, value2: any): boolean {
+  private valuesMatch(value1: any, value2: any): boolean {
     // if both values are null, they match
     return String(value1) === String(value2);
   }

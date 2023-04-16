@@ -5,9 +5,9 @@
 class SpreadsheetDB {
 
   // internal properties
-  spreadsheetId: string;
-  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet;
-  sheetMap: {[key: string]: SheetTable};
+  private spreadsheetId: string;
+  private spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet;
+  private sheetMap: {[key: string]: SheetTable};
 
   /**
    * SpreadsheetDB クラスのインスタンスを作成します。
@@ -36,7 +36,7 @@ class SpreadsheetDB {
    * @returns {number} 追加された行数。
    */
   insert(sheetName: string, rowValues: {[key: string]: any}): number {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
     return sheetTable.insert(rowValues);
   }
 
@@ -47,7 +47,7 @@ class SpreadsheetDB {
    * @returns {number} 追加された行数。
    */
   insertAll(sheetName: string, rowValuesArray: Array<object>): number {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
     return sheetTable.insertAll(rowValuesArray);
   }
 
@@ -60,7 +60,7 @@ class SpreadsheetDB {
    * @returns {Array<Object>} 検索に一致した行のデータ。一致する行がない場合は空の配列。
    */
   selectByPk(sheetName: string, pkColumnName: string, pkValue: any, sortBy: { column: string; order: "ASC" | "DESC"; }): Array<object> {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
 
     if (sortBy) {
       return sheetTable.selectByPkSorted(pkColumnName, pkValue, sortBy);
@@ -78,7 +78,7 @@ class SpreadsheetDB {
    * @returns {Array<Object>} 検索に一致した行のデータの配列。一致する行がない場合は空の配列。
    */
   selectByColumn(sheetName: string, columnName: string, value: any, sortBy: { column: string; order: "ASC" | "DESC"; }): Array<object> {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
 
     if (sortBy) {
       return sheetTable.selectByColumnSorted(columnName, value, sortBy);
@@ -96,7 +96,7 @@ class SpreadsheetDB {
    * @deprecated selectByColumn() に sortBy を指定することで代替できます。
    */
   selectByColumnSorted(sheetName: string, columnName: string, value: any, sortBy: { column: string; order: "ASC" | "DESC"; }): Array<object> {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
     return sheetTable.selectByColumnSorted(columnName, value, sortBy);
   }
 
@@ -108,7 +108,7 @@ class SpreadsheetDB {
    * @returns {Array<Object>} 検索に一致した行のデータの配列。一致する行がない場合は空の配列。
    */
   selectByColumns(sheetName: string, criteria: object, sortBy: { column: string; order: "ASC" | "DESC"; }): Array<object> {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
 
     if (sortBy) {
       return sheetTable.selectByColumnsSorted(criteria, sortBy);
@@ -123,7 +123,7 @@ class SpreadsheetDB {
    * @returns {Array<Object>} シートの全行のデータの配列。一致する行がない場合は空の配列。
    */
   selectAll(sheetName: string, sortBy: { column: string; order: "ASC" | "DESC"; }): Array<object> {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
 
     if (sortBy) {
       return sheetTable.selectAllSorted(sortBy);
@@ -137,7 +137,7 @@ class SpreadsheetDB {
    * @returns {number|null} 指定した列の最大値。列が存在しない場合は null。
    */
   selectMax(sheetName, columnName: string): number | null {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
     return sheetTable.selectMax(columnName);
   }
 
@@ -150,7 +150,7 @@ class SpreadsheetDB {
    * @returns {number|null} インクリメント後の値。列が存在しない場合は null。
    */
   selectByPkAndIncrement(sheetName, pkColumnName: string, pkValue: any, columnName: string, increment: number): number | null {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
     return sheetTable.selectByPkAndIncrement(pkColumnName, pkValue, columnName, increment);
   }
 
@@ -163,7 +163,7 @@ class SpreadsheetDB {
    * @returns {Array<Object>} 更新された行のデータ。一致する行がない場合は空の配列。
    */
   updateByPk(sheetName: string, pkColumnName: string, pkValue: any, rowValues: object): Array<object> {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
     return sheetTable.updateByPk(pkColumnName, pkValue, rowValues);
   }
 
@@ -177,7 +177,7 @@ class SpreadsheetDB {
    * @returns {Array<Object>} 更新された行のデータ。一致する行がない場合は空の配列。
    */
   updateItemByPk(sheetName: string, pkColumnName: string, pkValue: any, columnName: string, value: any): Array<object> {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
     return sheetTable.updateItemByPk(pkColumnName, pkValue, columnName, value);
   }
 
@@ -190,7 +190,7 @@ class SpreadsheetDB {
    * @returns {Array<Object>} 更新された行のデータ。一致する行がない場合は空の配列。
    */
   updateItemByColumns(sheetName: string, criteria: object, columnName: string, value: any): Array<object> {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
     return sheetTable.updateItemByColumns(criteria, columnName, value);
   }
 
@@ -202,7 +202,7 @@ class SpreadsheetDB {
    * @returns {Array<Object>} 更新された行のデータ。一致する行がない場合は空の配列。
    */
   updateItemsByColumns(sheetName: string, criteria: object, columnValues: Object): Array<object> {
-    const sheetTable = this.getSheetTable_(sheetName);
+    const sheetTable = this.getSheetTable(sheetName);
     return sheetTable.updateItemsByColumns(criteria, columnValues);
   }
 
@@ -213,7 +213,7 @@ class SpreadsheetDB {
    * @param {string} sheetName - 取得する SheetTable オブジェクトのシート名。
    * @returns {SheetTable} 指定したシート名の SheetTable オブジェクト。
    */
-  getSheetTable_(sheetName: string): SheetTable {
+  private getSheetTable(sheetName: string): SheetTable {
     if (this.sheetMap[sheetName]) {
       return this.sheetMap[sheetName];
     }
