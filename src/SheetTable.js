@@ -3,7 +3,8 @@
  */
 class SheetTable {
     /**
-     * SheetTable クラスのインスタンスを作成します。@param {Object} spreadsheet - Google スプレッドシートのインスタンス。
+     * SheetTable クラスのインスタンスを作成します。
+     * @param {Object} spreadsheet - Google スプレッドシートのインスタンス。
      * @param {string} sheetName - シートの名前。
      */
     constructor(spreadsheet, sheetName) {
@@ -206,10 +207,13 @@ class SheetTable {
       if (recordIndex === -1) return null;
     
       const record = data[recordIndex];
-      const value = record[columnIndex];
-      if (typeof value !== "number") {
-        throw new Error(`Column "${columnName}" is not a number`);
-      }
+      let value = record[columnIndex];
+    // value === "" の場合は value = 0 として扱う
+    if (value === "" || value === null) {
+      value = 0;
+    } else if (typeof value !== "number") {
+      throw new Error(`Column "${columnName}" is not a number`);
+    }
     
       const newValue = value + increment;
     
